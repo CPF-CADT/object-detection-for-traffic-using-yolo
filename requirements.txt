@@ -1,17 +1,20 @@
+# Ensure CUDA-enabled PyTorch (CRITICAL)
+--extra-index-url https://download.pytorch.org/whl/cu118
+
 # Core AI & Computer Vision
-ultralytics>=8.0.0      # The main YOLO engine (handles training & tracking)
-opencv-python>=4.8.0    # Image processing and visualization
-torch>=2.0.0            # Deep learning backend (CPU or CUDA)
-torchvision>=0.15.0     # Computer vision utilities for PyTorch
+ultralytics==8.3.0
+torch==2.2.2
+torchvision==0.17.2
+torchaudio==2.2.2
+opencv-python==4.9.0.80
 
 # Data Science & Visualization
-numpy>=1.26.0           # Numerical operations (updated for Python 3.14 wheel availability)
-matplotlib              # Plotting loss curves and sample images
-pandas                  # Handling CSV/Metadata if needed
-scipy                   # Mathematical optimizations for tracking
+numpy==1.26.4
+matplotlib==3.8.4
+pandas==2.2.2
+scipy==1.12.0
 
 # Utilities
-tqdm                    # Progress bars for the Day 1 processing script
-PyYAML                  # Parsing the data.yaml configuration file
-pathlib                 # Modern filesystem path handling
-requests                # For downloading dataset files
+tqdm==4.66.4
+PyYAML==6.0.1
+requests==2.31.0
