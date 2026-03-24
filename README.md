@@ -23,8 +23,7 @@ This project preprocesses the UA-DETRAC dataset for vehicle detection using YOLO
   - `DETRAC-Images/`: Folders containing images for each video sequence (e.g., MVI_20011/).
   - `DETRAC-Train-Annotations-XML/`: XML annotation files for training sequences.
   - `DETRAC-Test-Annotations-XML/`: XML annotation files for test sequences.
-- `vehicle_dataset/(https://cadtedu-my.sharepoint.com/:u:/g/personal/vathanak_phy_student_cadt_edu_kh/IQDqKsPhtMTJRYXtD4Qn_x2hAQbtoXY-8yWFvLUl4rtdyE8?e=y7NEQt)`: Processed dataset in YOLO format (created after running the notebook), including images, labels, and a `data.yaml` file for training.
-
+- [`vehicle_dataset/`](https://cadtedu-my.sharepoint.com/:u:/g/personal/vathanak_phy_student_cadt_edu_kh/IQDqKsPhtMTJRYXtD4Qn_x2hAQbtoXY-8yWFvLUl4rtdyE8?e=y7NEQt): Processed dataset in YOLO format. It is organized into `images/` and `labels/` directories, each containing `train`, `val`, and `test` subfolders to ensure compatibility with YOLO training pipelines. Includes a `data.yaml` file for configuration.
 ## Installation
 1. Clone the repo: `git clone https://github.com/CPF-CADT/object-detection-for-traffic-using-yolo.git`
 2. Install dependencies: `pip install -r requirements.txt`
