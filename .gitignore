@@ -1,0 +1,25 @@
+# Dataset (too large for GitHub)
+dataset/
+vehicle_dataset/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# Jupyter
+.ipynb_checkpoints
+
+# OS
+.DS_Store
+Thumbs.db
+*.zip
+
+# IDE
+.vscode/
+.idea/

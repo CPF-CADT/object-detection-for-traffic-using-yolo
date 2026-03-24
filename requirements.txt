@@ -1,0 +1,17 @@
+# Core AI & Computer Vision
+ultralytics>=8.0.0      # The main YOLO engine (handles training & tracking)
+opencv-python>=4.8.0    # Image processing and visualization
+torch>=2.0.0            # Deep learning backend (CPU or CUDA)
+torchvision>=0.15.0     # Computer vision utilities for PyTorch
+
+# Data Science & Visualization
+numpy>=1.26.0           # Numerical operations (updated for Python 3.14 wheel availability)
+matplotlib              # Plotting loss curves and sample images
+pandas                  # Handling CSV/Metadata if needed
+scipy                   # Mathematical optimizations for tracking
+
+# Utilities
+tqdm                    # Progress bars for the Day 1 processing script
+PyYAML                  # Parsing the data.yaml configuration file
+pathlib                 # Modern filesystem path handling
+requests                # For downloading dataset files
