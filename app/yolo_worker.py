@@ -5,6 +5,7 @@ Machine Learning Worker Thread for YOLO Detection in PySide6.
 import cv2
 import numpy as np
 from PySide6.QtCore import QThread, Signal, Slot
+import torch
 from ultralytics import YOLO
 import os
 
@@ -51,6 +52,13 @@ class YoloWorker(QThread):
                 return
 
             self.model = YOLO(self.model_path)
+
+            # Use GPU if available
+            if torch.cuda.is_available():
+                self.model.to("cuda")
+                print(f"DEBUG: YOLO worker using GPU for {self.video_source}")
+            else:
+                print(f"DEBUG: YOLO worker using CPU for {self.video_source}")
 
             cap = cv2.VideoCapture(self.video_source)
             if not cap.isOpened():

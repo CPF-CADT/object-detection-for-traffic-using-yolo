@@ -16,8 +16,9 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from .camera_widget_yolo import CameraWidget
-from .compass_widget import CompassWidget
 from .review_sidebar import ReviewSidebar
+from .system_monitor import SystemMonitorWidget
+from .compass_widget import CompassWidget
 from app.config import VIDEO_STORAGE_DIR
 from app.global_controller import GlobalTrafficController
 from app.utils.ui_helpers import COLORS, STYLES, create_hbox_layout, create_vbox_layout
@@ -107,7 +108,7 @@ class TrafficControlDashboard(QMainWindow):
         # Global Controller for traffic flow
         self.traffic_controller = GlobalTrafficController(self.camera_widgets, self)
 
-        # Right Sidebar - Compass and Controls
+        # Right Sidebar - Monitoring
         right_sidebar = QWidget()
         right_sidebar.setFixedWidth(200)
         right_sidebar.setStyleSheet(
@@ -117,37 +118,38 @@ class TrafficControlDashboard(QMainWindow):
         right_layout.setContentsMargins(8, 8, 8, 8)
         right_layout.setSpacing(16)
 
-        # Compass Section
+        # Compass (Navigation)
         compass_section = QWidget()
         compass_layout = QVBoxLayout(compass_section)
-        compass_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        compass_layout.setContentsMargins(0, 0, 0, 0)
 
-        compass_title = QLabel("NAVIGATION")
+        compass_title = QLabel("TRAFFIC FLOW")
         compass_title.setStyleSheet(
-            """
-            color: #ffffff;
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        """
+            "color: #9ca3af; font-size: 11px; font-weight: 600; margin-bottom: 4px;"
         )
         compass_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.compass = CompassWidget()
-        self.compass.set_direction("N")
-
+        self.compass_widget = CompassWidget()
         compass_layout.addWidget(compass_title)
-        compass_layout.addWidget(self.compass)
-        compass_layout.addStretch()
+        compass_layout.addWidget(
+            self.compass_widget, alignment=Qt.AlignmentFlag.AlignCenter
+        )
 
         right_layout.addWidget(compass_section)
 
-        # Camera Direction Controls
-        direction_section = QWidget()
-        direction_layout = QVBoxLayout(direction_section)
+        # Separator Line
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setStyleSheet("background-color: #333333;")
+        right_layout.addWidget(line)
 
-        direction_title = QLabel("CAMERA DIRECTIONS")
-        direction_title.setStyleSheet(
+        # System Monitoring
+        monitoring_section = QWidget()
+        monitoring_layout = QVBoxLayout(monitoring_section)
+        monitoring_layout.setContentsMargins(0, 0, 0, 0)
+
+        monitoring_title = QLabel("SYSTEM MONITORING")
+        monitoring_title.setStyleSheet(
             """
             color: #9ca3af;
             font-size: 12px;
@@ -155,36 +157,14 @@ class TrafficControlDashboard(QMainWindow):
             margin-bottom: 8px;
         """
         )
-        direction_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        monitoring_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        direction_layout.addWidget(direction_title)
+        self.system_monitor = SystemMonitorWidget()
 
-        self.direction_buttons = {}
-        directions = [("North", "N"), ("South", "S"), ("East", "E"), ("West", "W")]
-        for idx, (name, code) in enumerate(directions):
-            cam_num = idx + 1
-            btn = QLabel(f"{name} ({code}) - Cam {cam_num}")
-            btn.setStyleSheet(
-                """
-                QLabel {
-                    background-color: #2a2a2a;
-                    color: #d1d5db;
-                    padding: 6px 12px;
-                    border-radius: 4px;
-                    border: 1px solid #444444;
-                    margin: 2px 0;
-                }
-                QLabel:hover {
-                    background-color: #3a3a3a;
-                }
-                """
-            )
-            btn.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            btn.mousePressEvent = lambda e, d=code: self._set_camera_direction(d)
-            direction_layout.addWidget(btn)
-            self.direction_buttons[code] = btn
+        monitoring_layout.addWidget(monitoring_title)
+        monitoring_layout.addWidget(self.system_monitor)
 
-        right_layout.addWidget(direction_section)
+        right_layout.addWidget(monitoring_section)
         right_layout.addStretch()
 
         content_layout.addWidget(right_sidebar)
@@ -253,7 +233,7 @@ class TrafficControlDashboard(QMainWindow):
     def _set_camera_direction(self, direction: str):
         """Update the compass and status to reflect the selected camera's perspective."""
         print(f"DEBUG: Setting view direction to: {direction}")
-        self.compass.set_direction(direction)
+        self.compass_widget.set_direction(direction)
 
         # Update UI feedback on buttons
         for code, btn in self.direction_buttons.items():
@@ -376,8 +356,8 @@ class TrafficControlDashboard(QMainWindow):
             camera.stop_simulation()
 
     def _set_camera_direction(self, direction):
-        """Set the compass direction."""
-        self.compass.set_direction(direction)
+        """No longer used as compass is removed."""
+        pass
 
     def _load_video_to_camera(self, camera_widget, video_name):
         """Load a video into a camera widget."""

@@ -42,6 +42,9 @@ class CameraWidget(QFrame):
     """Reusable camera panel with YOLO detection."""
 
     cycle_finished = Signal(int)  # Emits camera_id when green/yellow cycle ends
+    request_transition = Signal(
+        int
+    )  # Emits camera_id when timer hits 0 to check traffic elsewhere
 
     def __init__(self, camera_id: int, parent=None):
         super().__init__(parent)
@@ -179,7 +182,8 @@ class CameraWidget(QFrame):
                 self.header.timer_label.hide()
         else:
             if self._active_light == "green":
-                self._on_light_clicked("yellow")
+                # REQUEST DECISION: Ask controller if anyone is waiting
+                self.request_transition.emit(self._camera_id)
             elif self._active_light == "yellow":
                 self._on_light_clicked("red")
                 self.cycle_finished.emit(self._camera_id)
@@ -343,6 +347,16 @@ class CameraWidget(QFrame):
             path = main_win.review_sidebar.get_selected_video_path()
             if path and os.path.exists(path):
                 self._load_video_file(os.path.abspath(path))
+
+    def _on_refresh_clicked(self):
+        """Reload and restart the current video to force re-detection."""
+        if self._current_video and os.path.exists(self._current_video):
+            self._load_video_file(self._current_video)
+            if self._simulation_running:
+                if self._yolo_worker:
+                    self._yolo_worker.start()
+        else:
+            self._load_default_video()
 
     def _timer_tick(self):
         """Countdown the current light timer."""

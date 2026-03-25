@@ -39,6 +39,7 @@ class GlobalTrafficController(QObject):
         # Connect signals
         for i, cam in enumerate(self.cameras):
             cam.cycle_finished.connect(self._on_camera_cycle_finished)
+            cam.request_transition.connect(self._on_transition_requested)
 
     def start(self):
         """Start the global traffic cycle."""
@@ -115,6 +116,39 @@ class GlobalTrafficController(QObject):
 
         # Force state change
         cam.set_light("GREEN")
+
+    @Slot(int)
+    def _on_transition_requested(self, camera_id):
+        """Called when a camera hits 0s Green. Decides if skipping Yellow is possible."""
+        if not self._running:
+            return
+
+        # Check if ANY other camera currently has vehicles
+        # (Exclude the current active camera)
+        other_total_cars = sum(
+            self.cameras[i]._car_count
+            for i in range(len(self.cameras))
+            if i != self._current_idx
+        )
+
+        current_cam = self.cameras[self._current_idx]
+
+        # REQUIREMENT: If NO other camera has cars, STAY GREEN (Skip Yellow/Red)
+        if other_total_cars == 0:
+            print(
+                f"DEBUG: No cars detected on other roads (C1, C2, C3, C4). Keeping Camera {camera_id} GREEN..."
+            )
+            # Extend green by 10 seconds to keep flow moving
+            current_cam._remaining_time = 10
+            current_cam._active_light = "green"
+            current_cam.update_ui_state()
+        else:
+            # Normal Flow: Others have cars, so switch from Green -> Yellow -> Red
+            print(
+                f"DEBUG: {other_total_cars} cars waiting on other roads. Switching Camera {camera_id} to YELLOW."
+            )
+            # Trigger the standard transition to yellow
+            current_cam.set_light("YELLOW")
 
     @Slot(int)
     def _on_camera_cycle_finished(self, camera_id):
