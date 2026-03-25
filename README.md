@@ -1,43 +1,3 @@
-# Smart Traffic Management System with YOLOv5
-
-This repository contains a high-performance, real-time traffic control and monitoring system using YOLOv5 for object detection. It features a sophisticated PySide6-based dashboard for intersection simulation, dynamic traffic light logic, and multi-camera orchestration.
-
----
-
-##  Core Approach (The `app/` Engine)
-The application follows a modular, signal-driven architecture to simulate a 4-way intersection controlled by AI:
-
-1.  **Multi-Threaded Processing (`yolo_worker.py`)**: 
-    - Each camera runs on a dedicated `QThread` to ensure the UI remains responsive.
-    - Uses **GPU Acceleration** (via CUDA) for real-time inference on the `yolov5_1k.pt` model.
-    - Emits live annotated frames and car counts back to the main UI.
-
-2.  **Global Traffic Controller (`global_controller.py`)**:
-    - Coordinates the 4-way cycle (CAM 1  CAM 2  CAM 3  CAM 4).
-    - **Dynamic Timing**: Automatically adjusts Green light duration based on the number of vehicles detected.
-    - **Smart Logic**:
-        - **Skip Empty Roads**: If a camera detects 0 cars, it skips its cycle immediately.
-        - **Extend Green**: If no cars are waiting on other roads, the current camera stays green to maximize flow.
-        - **Zero-Wait Transition**: Skips the Yellow/Red phase entirely if the intersection is empty elsewhere.
-
-3.  **Process-Isolated Monitoring (`system_monitor.py`)**:
-    - Tracks CPU Cores, RAM (RSS), and GPU Memory usage specific to this Python process.
-    - Designed for hardware benchmarking and performance comparison across different machines.
-
-##  Features and Capabilities
-
-###  Simulation & UI
-- **4-Way Intersection Grid**: Real-time synchronized playback and detection of 4 video feeds.
-- **Interactive Controls**: Manual light switching (Red/Yellow/Green) and video playback controls.
-- **Drag-and-Drop Video**: Easily swap out traffic footage for any of the 4 cameras via the UI sidebar.
-- **Navigation Compass**: A clean, "Navigation Style" UI that maps C1-C4 to cardinal directions (NWSE) with live active highlighting.
-
-###  AI & Logic
-- **YOLOv5 Integration**: Optimized for vehicle detection (Car, Bus, Truck merged into one "Vehicle" class).
-- **Auto-GPU Switching**: Detects your hardware and automatically forces CUDA/GPU usage for maximum FPS.
-- **Traffic Smoothing**: Implements weighted moving averages to prevent flickering in light durations during detection.
-
----
 
 # Object Detection for Traffic Using YOLO (Dataset & Training)
 
@@ -76,6 +36,47 @@ This project preprocesses the UA-DETRAC dataset for vehicle detection using YOLO
 2. This creates a `vehicle_dataset/` folder with YOLO-formatted data.
 3. Train YOLO: Use Ultralytics YOLOv8 (e.g., `yolo train data=vehicle_dataset/data.yaml model=yolov8n.pt`).
 
+##  Core Approach (The `app/` Engine)
+
+<p align="center">
+  <img src="https://res.cloudinary.com/dgnugtetz/image/upload/v1774466303/bdf97080-3b16-4ebf-9dd7-1bc2f58fd52a.png" alt="Traffic Detection UI" width="800">
+</p>
+
+*The dashboard displays real-time traffic monitoring, vehicle counting, and system performance metrics including CPU and GPU utilization.*
+
+The application follows a modular, signal-driven architecture to simulate a 4-way intersection controlled by AI:
+
+1.  **Multi-Threaded Processing (`yolo_worker.py`)**: 
+    - Each camera runs on a dedicated `QThread` to ensure the UI remains responsive.
+    - Uses **GPU Acceleration** (via CUDA) for real-time inference on the `yolov5_1k.pt` model.
+    - Emits live annotated frames and car counts back to the main UI.
+
+2.  **Global Traffic Controller (`global_controller.py`)**:
+    - Coordinates the 4-way cycle (CAM 1  CAM 2  CAM 3  CAM 4).
+    - **Dynamic Timing**: Automatically adjusts Green light duration based on the number of vehicles detected.
+    - **Smart Logic**:
+        - **Skip Empty Roads**: If a camera detects 0 cars, it skips its cycle immediately.
+        - **Extend Green**: If no cars are waiting on other roads, the current camera stays green to maximize flow.
+        - **Zero-Wait Transition**: Skips the Yellow/Red phase entirely if the intersection is empty elsewhere.
+
+3.  **Process-Isolated Monitoring (`system_monitor.py`)**:
+    - Tracks CPU Cores, RAM (RSS), and GPU Memory usage specific to this Python process.
+    - Designed for hardware benchmarking and performance comparison across different machines.
+
+##  Features and Capabilities
+
+###  Simulation & UI
+- **4-Way Intersection Grid**: Real-time synchronized playback and detection of 4 video feeds.
+- **Interactive Controls**: Manual light switching (Red/Yellow/Green) and video playback controls.
+- **Drag-and-Drop Video**: Easily swap out traffic footage for any of the 4 cameras via the UI sidebar.
+- **Navigation Compass**: A clean, "Navigation Style" UI that maps C1-C4 to cardinal directions (NWSE) with live active highlighting.
+
+###  AI & Logic
+- **YOLOv5 Integration**: Optimized for vehicle detection (Car, Bus, Truck merged into one "Vehicle" class).
+- **Auto-GPU Switching**: Detects your hardware and automatically forces CUDA/GPU usage for maximum FPS.
+- **Traffic Smoothing**: Implements weighted moving averages to prevent flickering in light durations during detection.
+
+---
 ## Requirements
 - Python 3.11.9
 - See `requirements.txt` for dependencies.
