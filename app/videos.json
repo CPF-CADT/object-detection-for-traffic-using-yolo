@@ -1,0 +1,28 @@
+[
+    {
+        "name": "Traffic Scene 1",
+        "path": "app/videos/1.mp4",
+        "description": "Busy downtown intersection"
+    },
+    {
+        "name": "Traffic Scene 2",
+        "path": "app/videos/2.mp4",
+        "description": "Highway daytime traffic"
+    },
+    {
+        "name": "Traffic Jam Stock Video.mp4",
+        "path": "F:\\projects\\object-detection-for-traffic-using-yolo\\app\\videos\\Traffic Jam Stock Video.mp4"
+    },
+    {
+        "name": "53125-472583428_medium.mp4",
+        "path": "F:\\projects\\object-detection-for-traffic-using-yolo\\app\\videos\\53125-472583428_medium.mp4"
+    },
+    {
+        "name": "118585-715426871_medium.mp4",
+        "path": "F:\\projects\\object-detection-for-traffic-using-yolo\\app\\videos\\118585-715426871_medium.mp4"
+    },
+    {
+        "name": "175344-853193768_medium.mp4",
+        "path": "F:\\projects\\object-detection-for-traffic-using-yolo\\app\\videos\\175344-853193768_medium.mp4"
+    }
+]

@@ -1,34 +1,45 @@
 """
-Review Sidebar Widget Component
+Review Sidebar Widget Component (Modularized)
 """
 
+import os
+import qtawesome as qta
 from PySide6.QtWidgets import (
     QWidget,
     QLabel,
     QVBoxLayout,
     QHBoxLayout,
     QFrame,
-    QScrollArea,
     QPushButton,
     QListWidget,
-    QListWidgetItem,
     QAbstractItemView,
+    QFileDialog,
+    QInputDialog,
+    QApplication,
 )
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtMultimedia import QMediaPlayer
-from PySide6.QtCore import Qt, QMimeData, QUrl
+from PySide6.QtCore import Qt, QMimeData, QUrl, QSize
 from PySide6.QtGui import QColor, QDrag, QPixmap, QPainter
-import qtawesome as qta
-import os
+
 from app.config import VIDEO_STORAGE_DIR
+from .video_item import VideoItem
+from app.utils.sidebar_logic import (
+    load_videos_from_json,
+    add_video_to_json,
+    get_video_thumbnail,
+)
 
 
 class ReviewSidebar(QWidget):
     """Left sidebar for reviewing and managing video files."""
 
+    VIDEOS_JSON = "app/videos.json"
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedWidth(250)
+        self._drag_start_pos = None
         self.setStyleSheet(
             "background-color: #1a1a1a; border-right: 1px solid #333333;"
         )
@@ -49,13 +60,61 @@ class ReviewSidebar(QWidget):
             color: #ffffff;
             font-size: 14px;
             font-weight: 700;
-            margin-bottom: 8px;
             padding: 4px;
             background-color: #2a2a2a;
             border-radius: 4px;
         """
         )
+
+        # Add Video Button
+        self.add_video_btn = QPushButton("ADD VIDEO")
+        self.add_video_btn.setIcon(qta.icon("fa5s.plus", color="#ffffff"))
+        self.add_video_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.add_video_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #3b82f6;
+                color: #ffffff;
+                border: none;
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 11px;
+                font-weight: 700;
+                margin-bottom: 4px;
+            }
+            QPushButton:hover {
+                background-color: #2563eb;
+            }
+        """
+        )
+        self.add_video_btn.clicked.connect(self._on_add_video_clicked)
+
+        # Add YouTube Button
+        self.add_yt_btn = QPushButton("ADD YOUTUBE")
+        self.add_yt_btn.setIcon(qta.icon("fa5b.youtube", color="#ffffff"))
+        self.add_yt_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.add_yt_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #ef4444;
+                color: #ffffff;
+                border: none;
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 11px;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+            QPushButton:hover {
+                background-color: #dc2626;
+            }
+        """
+        )
+        self.add_yt_btn.clicked.connect(self._on_add_yt_clicked)
+
         layout.addWidget(header)
+        layout.addWidget(self.add_video_btn)
+        layout.addWidget(self.add_yt_btn)
 
         # Video list
         self.video_list = QListWidget()
@@ -80,37 +139,26 @@ class ReviewSidebar(QWidget):
             }
         """
         )
-        self.video_list.setDragEnabled(True)
+        self.video_list.setIconSize(QSize(64, 48))
+        self.video_list.setDragEnabled(False)
         self.video_list.setAcceptDrops(False)
         self.video_list.setSelectionMode(
             QAbstractItemView.SelectionMode.SingleSelection
         )
 
         # Connect signals
-        self.video_list.itemPressed.connect(self._start_drag)
         self.video_list.itemClicked.connect(self._on_video_selected)
+        self.video_list.setDragEnabled(False)
 
-        # Add videos from storage directory
-        if os.path.exists(VIDEO_STORAGE_DIR):
-            for file_name in os.listdir(VIDEO_STORAGE_DIR):
-                if file_name.lower().endswith((".mp4", ".avi", ".mov", ".mkv")):
-                    item = QListWidgetItem(file_name)
-                    item.setToolTip(
-                        f"Click to preview or drag to camera view: {file_name}"
-                    )
-                    self.video_list.addItem(item)
+        self._video_path_map = {}
+        self._refresh_video_list()
 
         layout.addWidget(self.video_list)
 
         # Preview area label
         preview_label = QLabel("PREVIEW")
         preview_label.setStyleSheet(
-            """
-            color: #9ca3af;
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 8px;
-        """
+            "color: #9ca3af; font-size: 12px; font-weight: 600; margin-top: 8px;"
         )
         layout.addWidget(preview_label)
 
@@ -118,13 +166,7 @@ class ReviewSidebar(QWidget):
         self.preview_area = QFrame()
         self.preview_area.setFixedHeight(150)
         self.preview_area.setStyleSheet(
-            """
-            QFrame {
-                background-color: #000000;
-                border: 2px dashed #4b5563;
-                border-radius: 4px;
-            }
-        """
+            "background-color: #000000; border: 2px dashed #4b5563; border-radius: 4px;"
         )
 
         preview_layout = QVBoxLayout(self.preview_area)
@@ -150,15 +192,26 @@ class ReviewSidebar(QWidget):
         )
         preview_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        placeholder_layout.addWidget(preview_icon)
-        placeholder_layout.addWidget(preview_text)
+        placeholder_layout.addWidget(
+            preview_icon, alignment=Qt.AlignmentFlag.AlignCenter
+        )
+        placeholder_layout.addWidget(
+            preview_text, alignment=Qt.AlignmentFlag.AlignCenter
+        )
 
         # Video widget
         self.video_widget = QVideoWidget()
         self.video_widget.setStyleSheet("background-color: #000000; border: none;")
-        self.media_player.setVideoOutput(self.video_widget)
+        self.video_widget.setCursor(Qt.CursorShape.OpenHandCursor)
+        self.video_widget.setToolTip("Drag this preview to replace a camera video")
 
-        # Add widgets to preview layout (initially show placeholder)
+        # Use lambda for short handlers
+        self.video_widget.mousePressEvent = lambda ev: self._start_preview_drag(ev)
+
+        self.media_player.setVideoOutput(self.video_widget)
+        self.media_player.setLoops(QMediaPlayer.Loops.Infinite)
+
+        # Add widgets to preview layout
         preview_layout.addWidget(self.preview_placeholder)
         preview_layout.addWidget(self.video_widget)
         self.video_widget.hide()
@@ -212,68 +265,122 @@ class ReviewSidebar(QWidget):
         layout.addLayout(controls_layout)
         layout.addStretch()
 
+    def _create_control_btn(self, icon, callback):
+        btn = QPushButton()
+        btn.setIcon(qta.icon(icon, color="#60a5fa"))
+        btn.setFixedSize(40, 28)
+        btn.setStyleSheet(
+            "QPushButton { background-color: #2a2a2a; border: 1px solid #444444; border-radius: 4px; }"
+            "QPushButton:hover { background-color: #3a3a3a; }"
+        )
+        btn.clicked.connect(callback)
+        return btn
+
+    def _refresh_video_list(self):
+        self.video_list.clear()
+        self._video_path_map.clear()
+        videos = load_videos_from_json(self.VIDEOS_JSON)
+        for v in videos:
+            name, path = v["name"], v["path"]
+            self._video_path_map[name] = path
+            icon = get_video_thumbnail(path) or qta.icon("fa5s.video", color="#6b7280")
+            item = VideoItem(name, path, icon)
+            item.setToolTip(f"Path: {path}")
+            self.video_list.addItem(item)
+
     def _on_video_selected(self, item):
-        """Called when a video is clicked in the list."""
         if item:
-            video_name = item.text()
-            video_path = os.path.join(VIDEO_STORAGE_DIR, video_name)
-            if os.path.exists(video_path):
-                self._load_preview_video(video_path)
+            path = self._video_path_map.get(item.text())
+            if path and os.path.exists(path):
+                self._load_preview_video(path)
+
+    def _on_add_video_clicked(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Add Video", os.getcwd(), "Video Files (*.mp4 *.avi *.mov *.mkv)"
+        )
+        if file_path:
+            add_video_to_json(self.VIDEOS_JSON, os.path.basename(file_path), file_path)
+            self._refresh_video_list()
+
+    def _on_add_yt_clicked(self):
+        url, ok = QInputDialog.getText(
+            self,
+            "Add YouTube",
+            "URL:",
+            text="https://www.youtube.com/watch?v=cJatWBDNabE",
+        )
+        if ok and url:
+            print(f"YouTube download requested for {url}")
+            # Implementation omitted for brevity in this UI pass
 
     def _load_preview_video(self, file_path):
-        """Load selected video into the preview widget."""
-        if not os.path.exists(file_path):
-            return
-
         self.current_video_path = file_path
-
-        # Hide placeholder, show video widget
         self.preview_placeholder.hide()
         self.video_widget.show()
-
-        # Load video into media player
-        url = QUrl.fromLocalFile(os.path.abspath(file_path))
-        self.media_player.setSource(url)
+        self.media_player.stop()
+        self.media_player.setSource(QUrl.fromLocalFile(os.path.abspath(file_path)))
         self.media_player.play()
 
     def _preview_play(self):
-        """Play the loaded preview video."""
-        if self.current_video_path and self.media_player.source() != QUrl():
-            self.media_player.play()
+        self.media_player.play()
 
     def _preview_pause(self):
-        """Pause the preview video."""
-        if self.media_player.isPlaying():
-            self.media_player.pause()
+        self.media_player.pause()
 
     def _preview_stop(self):
-        """Stop the preview video and reset."""
         self.media_player.stop()
         self.media_player.setPosition(0)
 
-    def _start_drag(self, item):
-        """Start drag operation for video item."""
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            item = self.video_list.itemAt(self.video_list.mapFrom(self, event.pos()))
+            if item:
+                self._drag_start_pos = event.pos()
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if (
+            not (event.buttons() & Qt.MouseButton.LeftButton)
+            or not self._drag_start_pos
+        ):
+            return
+        if (
+            event.pos() - self._drag_start_pos
+        ).manhattanLength() < QApplication.startDragDistance():
+            return
+        item = self.video_list.itemAt(self.video_list.mapFrom(self, event.pos()))
         if item:
-            mime_data = QMimeData()
-            mime_data.setText(item.text())
+            self._start_drag(item)
+            self._drag_start_pos = None
 
-            drag = QDrag(self)
-            drag.setMimeData(mime_data)
+    def _start_drag(self, item):
+        self._execute_drag(item.text(), self._video_path_map[item.text()])
 
-            # Create a pixmap for drag visualization
-            pixmap = QPixmap(100, 50)
-            pixmap.fill(QColor("#2a2a2a"))
-            painter = QPainter(pixmap)
-            painter.setPen(QColor("#60a5fa"))
-            painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, item.text())
-            painter.end()
+    def _start_preview_drag(self, event):
+        if event.button() == Qt.MouseButton.LeftButton and self.current_video_path:
+            self._execute_drag(
+                os.path.basename(self.current_video_path), self.current_video_path
+            )
 
-            drag.setPixmap(pixmap)
-            drag.exec(Qt.DropAction.CopyAction)
+    def _execute_drag(self, name, path):
+        mime = QMimeData()
+        mime.setUrls([QUrl.fromLocalFile(os.path.abspath(path))])
+        mime.setText(name)
+        drag = QDrag(self)
+        drag.setMimeData(mime)
+        pixmap = QPixmap(140, 50)
+        pixmap.fill(QColor("#2a2a2a"))
+        p = QPainter(pixmap)
+        p.setPen(QColor("#60a5fa"))
+        p.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, f"Switch to {name}")
+        p.end()
+        drag.setPixmap(pixmap)
+        drag.exec(Qt.DropAction.CopyAction | Qt.DropAction.MoveAction)
+
+    def get_selected_video_path(self):
+        current_item = self.video_list.currentItem()
+        return self._video_path_map.get(current_item.text()) if current_item else None
 
     def get_selected_video(self):
-        """Get the currently selected video file name."""
         current_item = self.video_list.currentItem()
-        if current_item:
-            return current_item.text()
-        return None
+        return current_item.text() if current_item else None
