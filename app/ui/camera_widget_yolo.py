@@ -60,7 +60,7 @@ class CameraWidget(QFrame):
         self._simulation_running = False
         self._yolo_worker = None
         self._car_count = 0
-        self._model_path = os.path.abspath("models/yolov5_1k.pt")
+        self._model_path = os.path.abspath("models/yolo.pt")
         self._remaining_time = self.TIMERS[self._active_light]
 
         # Setup Main Layout
