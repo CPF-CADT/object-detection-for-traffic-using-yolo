@@ -1,8 +1,8 @@
 
 # YOLOv5 Model Validation Report
 
-**Date:** 2026-04-08 15:58:24
-**Model:** models/yolov5_1k.pt
+**Date:** 2026-04-08 15:52:35
+**Model:** models/yolov8.pt
 **Dataset:** vehicle_dataset/data.yaml
 
 ---
@@ -11,10 +11,10 @@
 
 | Metric       | Value  |
 |--------------|--------|
-| mAP@.5-.95   | 0.8777  |
-| mAP@.5       | 0.9806  |
-| Precision    | 0.9765  |
-| Recall       | 0.9594  |
+| mAP@.5-.95   | 0.9138  |
+| mAP@.5       | 0.9886  |
+| Precision    | 0.9798  |
+| Recall       | 0.9791  |
 
 ---
 
@@ -44,4 +44,4 @@ The PR curve and F1 score give insight into the trade-off between precision and 
 
 ---
 
-**Validation artifacts are saved in:** F:\projects\object-detection-for-traffic-using-yolo\runs\detect\validation_results\yolo_validation_yolov5
+**Validation artifacts are saved in:** F:\projects\object-detection-for-traffic-using-yolo\runs\detect\validation_results\yolo_validation_yolov8
