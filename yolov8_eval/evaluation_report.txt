@@ -1,0 +1,43 @@
+================================================================================
+YOLOV8 MODEL EVALUATION REPORT
+================================================================================
+
+
+[STATS] DATASET STATISTICS
+────────────────────────────────────────────────────────────────────────────
+  Total test images:              150
+  Total detections:               1417
+  Average detections per image:   9.45
+
+[DETECTIONS] DETECTION BREAKDOWN BY CLASS
+────────────────────────────────────────────────────────────────────────────
+  vehicle        : 1417 detections (100.0%)
+
+[METRICS] CONFIDENCE METRICS
+────────────────────────────────────────────────────────────────────────────
+  Minimum confidence:             0.4511
+  Mean confidence:                0.8780
+  Median confidence:              0.9005
+  Maximum confidence:             0.9588
+  Std deviation:                  0.0818
+
+[DIMENSIONS] BOUNDING BOX DIMENSIONS
+────────────────────────────────────────────────────────────────────────────
+  Average width:                  93.1 pixels
+  Average height:                 63.7 pixels
+  Average area:                   8032 pixels²
+
+[CONFIG] MODEL CONFIGURATION
+────────────────────────────────────────────────────────────────────────────
+  Model path:                     models/yolov8.pt
+  Confidence threshold:           0.45
+  IoU threshold:                  0.5
+
+[FILES] OUTPUT FILES
+────────────────────────────────────────────────────────────────────────────
+  [OK] Annotated images:          yolov8_eval/annotated/
+  [OK] Detections log (CSV):      yolov8_eval/detections_log.csv
+  [OK] Sample predictions:        yolov8_eval/sample_predictions.png
+  [OK] Confidence analysis:       yolov8_eval/confidence_analysis.png
+  [OK] Bounding box analysis:     yolov8_eval/bbox_analysis.png
+────────────────────────────────────────────────────────────────────────────
